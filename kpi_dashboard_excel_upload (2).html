@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KPI Dashboard — Screenshot Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #060b14;
+  --panel: #0d1526;
+  --card: #111e35;
+  --border: #1c2f50;
+  --accent: #38bdf8;
+  --gold: #f59e0b;
+  --green: #10b981;
+  --red: #f43f5e;
+  --purple: #a78bfa;
+  --orange: #fb923c;
+  --text: #e2eaf8;
+  --muted: #4a6080;
+  --sub: #8aa0c0;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  font-family: 'Outfit', sans-serif;
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* ── CONTROL PANEL ── */
+.controls {
+  background: #080e1c;
+  border-bottom: 1px solid var(--border);
+  padding: 16px 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.controls h2 { font-size: 1rem; font-weight: 700; color: var(--accent); white-space: nowrap; flex: 0 0 auto; align-self: center; }
+.ctrl-group { display: flex; flex-direction: column; gap: 4px; }
+.ctrl-group label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); font-family: 'DM Mono', monospace; }
+.ctrl-group select, .ctrl-group input {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 7px;
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  font-family: 'Outfit', sans-serif;
+  outline: none;
+  cursor: pointer;
+}
+.ctrl-group select:focus, .ctrl-group input:focus { border-color: var(--accent); }
+.spacer { flex: 1; }
+.btn-screenshot {
+  background: linear-gradient(135deg, #0ea5e9, #6366f1);
+  color: white;
+  border: none;
+  border-radius: 9px;
+  padding: 8px 18px;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.btn-screenshot:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(14,165,233,0.35); }
+.btn-secondary {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--sub);
+  border-radius: 9px;
+  padding: 8px 14px;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 600;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── SCREENSHOT AREA ── */
+#screenshotArea {
+  padding: 20px;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+/* ── REPORT HEADER ── */
+.report-header {
+  background: linear-gradient(135deg, #0d1a35 0%, #0a1428 50%, #0d1a35 100%);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 22px 28px;
+  margin-bottom: 18px;
+  position: relative;
+  overflow: hidden;
+}
+.report-header::before {
+  content: '';
+  position: absolute;
+  top: -40px; right: -40px;
+  width: 180px; height: 180px;
+  background: radial-gradient(circle, rgba(56,189,248,0.12) 0%, transparent 70%);
+  border-radius: 50%;
+}
+.report-header::after {
+  content: '';
+  position: absolute;
+  bottom: -30px; left: 30%;
+  width: 300px; height: 120px;
+  background: radial-gradient(ellipse, rgba(99,102,241,0.08) 0%, transparent 70%);
+}
+.rh-top { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px; }
+.rh-title { font-size: 1.5rem; font-weight: 900; letter-spacing: -0.04em; }
+.rh-title span { color: var(--accent); }
+.rh-meta { font-size: 0.72rem; color: var(--sub); font-family: 'DM Mono', monospace; line-height: 1.8; text-align: right; }
+.rh-pills { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.pill {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.pill-blue { background: rgba(56,189,248,0.15); color: var(--accent); border: 1px solid rgba(56,189,248,0.3); }
+.pill-gold { background: rgba(245,158,11,0.15); color: var(--gold); border: 1px solid rgba(245,158,11,0.3); }
+.pill-green { background: rgba(16,185,129,0.15); color: var(--green); border: 1px solid rgba(16,185,129,0.3); }
+
+/* ── DAY VIEW SELECTOR ── */
+.day-selector {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.day-btn {
+  padding: 7px 16px;
+  border-radius: 22px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--sub);
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.day-btn:hover { border-color: var(--accent); color: var(--accent); }
+.day-btn.active { background: var(--accent); border-color: var(--accent); color: #060b14; }
+.day-btn.has-data::after { content: '●'; font-size: 0.4rem; margin-left: 4px; vertical-align: super; color: var(--green); }
+
+/* ── KPI SECTION ── */
+.kpi-section-title {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--muted);
+  font-family: 'DM Mono', monospace;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.kpi-section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+/* ── KPI CARDS ── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+@media (max-width: 700px) { .kpi-grid { grid-template-columns: repeat(3, 1fr); } }
+
+.kpi-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 12px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  border-radius: 12px 12px 0 0;
+}
+.kpi-card.c-leads::before { background: linear-gradient(90deg, #38bdf8, #6366f1); }
+.kpi-card.c-appts::before { background: linear-gradient(90deg, #10b981, #38bdf8); }
+.kpi-card.c-insp::before { background: linear-gradient(90deg, #f59e0b, #fb923c); }
+.kpi-card.c-l2a::before { background: linear-gradient(90deg, #a78bfa, #ec4899); }
+.kpi-card.c-a2i::before { background: linear-gradient(90deg, #fb923c, #f59e0b); }
+
+.kpi-name { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--sub); font-family: 'DM Mono', monospace; margin-bottom: 6px; }
+.kpi-value { font-size: 1.45rem; font-weight: 800; letter-spacing: -0.03em; line-height: 1; margin-bottom: 4px; }
+.kpi-value.c-leads { color: #38bdf8; }
+.kpi-value.c-appts { color: #10b981; }
+.kpi-value.c-insp { color: #f59e0b; }
+.kpi-value.c-l2a { color: #a78bfa; }
+.kpi-value.c-a2i { color: #fb923c; }
+.kpi-empty { font-size: 1.2rem; color: var(--muted); font-weight: 300; }
+.kpi-trend {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.65rem;
+  font-family: 'DM Mono', monospace;
+  font-weight: 500;
+}
+.kpi-trend.up { color: var(--green); }
+.kpi-trend.down { color: var(--red); }
+.kpi-trend.neutral { color: var(--muted); }
+.kpi-baseline { font-size: 0.6rem; color: var(--muted); margin-top: 3px; font-family: 'DM Mono', monospace; }
+
+/* ── DATE ROWS TABLE ── */
+.dates-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+  margin-bottom: 18px;
+}
+.dates-table thead th {
+  padding: 8px 10px;
+  text-align: left;
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  font-family: 'DM Mono', monospace;
+  border-bottom: 1px solid var(--border);
+}
+.dates-table thead th:not(:first-child) { text-align: center; }
+.dates-table tbody tr {
+  border-bottom: 1px solid rgba(28,47,80,0.5);
+  transition: background 0.15s;
+}
+.dates-table tbody tr:hover { background: rgba(56,189,248,0.04); }
+.dates-table tbody tr.today-row { background: rgba(56,189,248,0.06); }
+.dates-table tbody tr.today-row td:first-child { font-weight: 700; }
+.dates-table td { padding: 9px 10px; }
+.dates-table td:not(:first-child) { text-align: center; }
+.date-cell { font-family: 'DM Mono', monospace; font-size: 0.75rem; color: var(--sub); }
+.date-label { font-weight: 600; color: var(--text); font-size: 0.8rem; }
+.today-badge {
+  display: inline-block;
+  background: var(--accent);
+  color: #060b14;
+  font-size: 0.55rem;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 10px;
+  margin-left: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  vertical-align: middle;
+}
+.val-cell { font-family: 'DM Mono', monospace; font-size: 0.78rem; }
+.val-cell.has-data { color: var(--text); font-weight: 500; }
+.val-cell.no-data { color: var(--muted); font-style: italic; }
+.trend-up { color: var(--green); font-size: 0.65rem; }
+.trend-down { color: var(--red); font-size: 0.65rem; }
+
+/* ── INLINE EDIT ── */
+.editable {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.78rem;
+  font-weight: 500;
+  width: 80px;
+  text-align: center;
+  outline: none;
+  border-bottom: 1px dashed var(--border);
+  padding: 2px 4px;
+}
+.editable:focus { border-bottom-color: var(--accent); color: var(--accent); }
+.editable::placeholder { color: var(--muted); font-size: 0.7rem; }
+
+/* ── SCREENSHOT HIDE ── */
+.no-screenshot { }
+.screenshot-mode .no-screenshot { display: none !important; }
+.screenshot-mode .controls { display: none !important; }
+.screenshot-mode body { background: var(--bg); }
+.screenshot-mode #screenshotArea { padding: 28px; max-width: 100%; }
+.screenshot-mode .editable { border-bottom: none; }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 20px; right: 20px;
+  background: var(--green); color: #060b14;
+  padding: 10px 18px; border-radius: 50px;
+  font-weight: 700; font-size: 0.8rem;
+  opacity: 0; transition: opacity 0.3s;
+  pointer-events: none; z-index: 999;
+}
+.toast.show { opacity: 1; }
+
+/* ── MONTH SUMMARY ── */
+.summary-bar {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+.sum-item { text-align: center; }
+.sum-label { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-family: 'DM Mono', monospace; margin-bottom: 4px; }
+.sum-val { font-size: 1rem; font-weight: 700; }
+
+/* ── ALL DAYS VIEW ── */
+.all-days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+}
+@media (max-width: 700px) { .all-days-grid { grid-template-columns: repeat(2, 1fr); } }
+
+.day-column {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.day-col-header {
+  padding: 8px 10px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-align: center;
+  font-family: 'DM Mono', monospace;
+}
+.day-col-header.Mon { background: rgba(56,189,248,0.12); color: #38bdf8; }
+.day-col-header.Tue { background: rgba(16,185,129,0.12); color: #10b981; }
+.day-col-header.Wed { background: rgba(245,158,11,0.12); color: #f59e0b; }
+.day-col-header.Thu { background: rgba(167,139,250,0.12); color: #a78bfa; }
+.day-col-header.Fri { background: rgba(251,146,60,0.12); color: #fb923c; }
+.day-col-header.Sat { background: rgba(244,63,94,0.12); color: #f43f5e; }
+.day-col-header.Sun { background: rgba(96,165,250,0.12); color: #60a5fa; }
+
+.day-date-row {
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.65rem;
+  font-family: 'DM Mono', monospace;
+  color: var(--sub);
+  text-align: center;
+}
+.day-date-row.is-today { color: var(--accent); font-weight: 700; }
+.day-mini-kpi { padding: 6px 8px; border-bottom: 1px solid rgba(28,47,80,0.4); }
+.day-mini-kpi:last-child { border-bottom: none; }
+.dmk-label { font-size: 0.55rem; text-transform: uppercase; color: var(--muted); font-family: 'DM Mono', monospace; }
+.dmk-val { font-size: 0.78rem; font-weight: 600; font-family: 'DM Mono', monospace; }
+
+/* ── UPLOAD ZONE ── */
+.upload-zone {
+  background: #080e1c;
+  border-bottom: 2px solid var(--border);
+  padding: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease;
+  max-height: 200px;
+}
+.upload-zone.collapsed { max-height: 0; }
+.upload-inner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 20px;
+  flex-wrap: wrap;
+}
+.drop-area {
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  padding: 12px 24px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+  min-width: 220px;
+  position: relative;
+}
+.drop-area:hover, .drop-area.dragover {
+  border-color: var(--accent);
+  background: rgba(56,189,248,0.06);
+}
+.drop-area input[type=file] {
+  position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+}
+.drop-icon { font-size: 1.4rem; margin-bottom: 4px; }
+.drop-label { font-size: 0.78rem; color: var(--sub); font-weight: 600; }
+.drop-sub { font-size: 0.65rem; color: var(--muted); margin-top: 2px; font-family: 'DM Mono', monospace; }
+.upload-status {
+  flex: 1;
+  min-width: 200px;
+}
+.status-file { font-size: 0.85rem; font-weight: 700; color: var(--accent); }
+.status-counts { font-size: 0.7rem; color: var(--sub); font-family: 'DM Mono', monospace; margin-top: 4px; line-height: 1.8; }
+.status-error { font-size: 0.78rem; color: var(--red); margin-top: 4px; }
+.btn-toggle-upload {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  border-radius: 7px;
+  padding: 5px 10px;
+  font-size: 0.7rem;
+  cursor: pointer;
+  font-family: 'Outfit', sans-serif;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.btn-toggle-upload:hover { border-color: var(--accent); color: var(--accent); }
+.parse-progress {
+  font-size: 0.7rem;
+  color: var(--gold);
+  font-family: 'DM Mono', monospace;
+  margin-top: 4px;
+}
+
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+
+<!-- Controls -->
+<div class="controls no-screenshot" id="controlBar">
+  <h2>📊 KPI Dashboard</h2>
+  
+  <div class="ctrl-group">
+    <label>View Mode</label>
+    <select id="viewMode" onchange="switchView()">
+      <option value="byDay">By Day of Week</option>
+      <option value="allDays">All Days Overview</option>
+    </select>
+  </div>
+
+  <div class="ctrl-group" id="dayPickerGroup">
+    <label>Select Day</label>
+    <select id="selectedDay" onchange="renderDayView()">
+      <option value="Mon">Monday</option>
+      <option value="Tue">Tuesday</option>
+      <option value="Wed">Wednesday</option>
+      <option value="Thu">Thursday</option>
+      <option value="Fri">Friday</option>
+      <option value="Sat">Saturday</option>
+      <option value="Sun">Sunday</option>
+    </select>
+  </div>
+
+  <div class="ctrl-group">
+    <label>Section</label>
+    <select id="section" onchange="render()">
+      <option value="Overall">Overall</option>
+      <option value="W/o Sof">W/o Sof</option>
+    </select>
+  </div>
+
+  <div class="spacer"></div>
+
+  <button class="btn-secondary no-screenshot" onclick="clearDayData()">🗑 Clear Day</button>
+  <button class="btn-secondary no-screenshot" id="toggleUploadBtn" onclick="toggleUploadZone()">✖ Close Upload</button>
+  <button class="btn-screenshot no-screenshot" onclick="takeScreenshot()">📸 Screenshot</button>
+</div>
+
+<!-- Upload Zone -->
+<div class="upload-zone no-screenshot" id="uploadZone">
+  <div class="upload-inner">
+    <div class="drop-area" id="dropArea">
+      <input type="file" id="excelFileInput" accept=".xlsx,.xls" onchange="handleFileSelect(this.files[0])">
+      <div class="drop-icon">📊</div>
+      <div class="drop-label">Drop Excel file here</div>
+      <div class="drop-sub">or click to browse · .xlsx / .xls</div>
+    </div>
+    <div class="upload-status">
+      <div class="status-file" id="statusFile">No file loaded</div>
+      <div class="status-counts" id="statusCounts">Upload your Excel to auto-populate all dates</div>
+      <div class="status-error" id="statusError"></div>
+      <div class="parse-progress" id="parseProgress"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Screenshot Area -->
+<div id="screenshotArea">
+  <!-- Report Header -->
+  <div class="report-header">
+    <div class="rh-top">
+      <div>
+        <div class="rh-title">Daily Average <span id="hdrMonth">March 2026</span></div>
+        <div style="font-size:0.8rem; color:var(--sub); margin-top:4px;" id="hdrSubtitle">KPI Performance Report</div>
+      </div>
+      <div class="rh-meta" id="hdrMeta"></div>
+    </div>
+    <div class="rh-pills">
+      <span class="pill pill-blue" id="pillDay">Monday</span>
+      <span class="pill pill-gold" id="pillSection">Overall</span>
+      <span class="pill pill-green" id="pillDates"></span>
+    </div>
+  </div>
+
+  <!-- Day Selector (screenshot hidden) -->
+  <div class="day-selector no-screenshot" id="daySelectorBtns"></div>
+
+  <!-- Main Content -->
+  <div id="mainContent"></div>
+</div>
+
+<div class="toast" id="toast">📸 Screenshot copied!</div>
+
+<script>
+// ─── DATA ───
+const HISTORICAL = {
+  Overall: {
+    Mon: { leads:[15638,16186,17455], appts:[6829,6581,6568], insp:[4047,3918,3658], l2a:[0.437,0.407,0.376], a2i:[0.668,0.667,0.652] },
+    Tue: { leads:[15728,16025,17143], appts:[6977,6482,6440], insp:[4185,3852,3720], l2a:[0.444,0.404,0.376], a2i:[0.673,0.653,0.659] },
+    Wed: { leads:[15096,15394,17416], appts:[6566,6089,6581], insp:[3949,3662,3564], l2a:[0.435,0.396,0.378], a2i:[0.658,0.668,0.653] },
+    Thu: { leads:[15666,14710,17314], appts:[6839,5880,6434], insp:[3892,3462,3576], l2a:[0.44,0.40,0.37], a2i:[0.64,0.66,0.65] },
+    Fri: { leads:[15461,15085,17414], appts:[6913,6362,6561], insp:[4015,3491,3443], l2a:[0.45,0.42,0.38], a2i:[0.68,0.66,0.64] },
+    Sat: { leads:[15622,15753,17620], appts:[7079,6675,6973], insp:[4981,4594,4514], l2a:[0.45,0.42,0.40], a2i:[0.69,0.69,0.66] },
+    Sun: { leads:[15057,15021,17049], appts:[6506,6092,5961], insp:[5188,4873,4582], l2a:[0.43,0.41,0.35], a2i:[0.64,0.64,0.60] },
+  },
+  'W/o Sof': {
+    Mon: { leads:[15321,15800,17011], appts:[6378,6117,6056], insp:[3521,3398,3135], l2a:[0.416,0.387,0.356], a2i:[0.724,0.726,0.709] },
+    Tue: { leads:[15407,15694,16696], appts:[6526,6075,5926], insp:[3660,3391,3197], l2a:[0.424,0.387,0.355], a2i:[0.727,0.721,0.721] },
+    Wed: { leads:[14803,15056,16972], appts:[6157,5682,6056], insp:[3467,3198,3026], l2a:[0.42,0.38,0.36], a2i:[null,null,null] },
+    Thu: { leads:[15333,14400,16844], appts:[6369,5499,5879], insp:[3410,3031,3022], l2a:[0.42,0.38,0.35], a2i:[null,null,null] },
+    Fri: { leads:[15137,14742,16935], appts:[6458,5938,6006], insp:[3445,3000,2903], l2a:[0.43,0.40,0.35], a2i:[null,null,null] },
+    Sat: { leads:[15307,15393,17165], appts:[6635,6234,6418], insp:[4459,4092,3943], l2a:[0.43,0.40,0.37], a2i:[null,null,null] },
+    Sun: { leads:[14719,14679,16599], appts:[6028,5659,5453], insp:[4629,4369,4053], l2a:[0.41,0.39,0.33], a2i:[0.73,0.73,0.69] },
+  }
+};
+
+// userData[dayKey][dateStr] = { leads, appts, insp, l2a, a2i }
+let userData = {};
+const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const DAY_FULL = { Mon:'Monday', Tue:'Tuesday', Wed:'Wednesday', Thu:'Thursday', Fri:'Friday', Sat:'Saturday', Sun:'Sunday' };
+const KPI_COLORS = { leads:'c-leads', appts:'c-appts', insp:'c-insp', l2a:'c-l2a', a2i:'c-a2i' };
+const KPI_NAMES = { leads:'Leads Avg', appts:'Appts Avg', insp:'Inspections', l2a:'L2A Ratio', a2i:'A2I Ratio' };
+
+function getCurrentMonth() {
+  const now = new Date();
+  return { year: now.getFullYear(), month: now.getMonth() };
+}
+
+function getDatesInMonthByDay(dayAbbr) {
+  const { year, month } = getCurrentMonth();
+  const targetDayIndex = DAYS.indexOf(dayAbbr);
+  const result = [];
+  const d = new Date(year, month, 1);
+  while (d.getMonth() === month) {
+    if (d.getDay() === targetDayIndex) {
+      result.push(new Date(d));
+    }
+    d.setDate(d.getDate() + 1);
+  }
+  return result;
+}
+
+function getAllDatesInMonth() {
+  const { year, month } = getCurrentMonth();
+  const result = {};
+  DAYS.forEach(day => { result[day] = []; });
+  const d = new Date(year, month, 1);
+  while (d.getMonth() === month) {
+    const abbr = DAYS[d.getDay()];
+    result[abbr].push(new Date(d));
+    d.setDate(d.getDate() + 1);
+  }
+  return result;
+}
+
+function dateKey(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function isToday(d) {
+  const now = new Date();
+  return d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+}
+
+function fmt(v, isRatio=false) {
+  if (v === null || v === undefined || v === '' || isNaN(v)) return null;
+  if (isRatio) return (parseFloat(v)*100).toFixed(1)+'%';
+  return parseInt(v).toLocaleString('en-IN');
+}
+
+function trendVsFeb(today, feb, isRatio=false) {
+  if (!today || !feb || isNaN(today) || isNaN(feb)) return null;
+  const diff = ((parseFloat(today) - parseFloat(feb)) / parseFloat(feb)) * 100;
+  return { pct: Math.abs(diff).toFixed(1), dir: diff >= 0 ? 'up' : 'down' };
+}
+
+function getSection() { return document.getElementById('section').value; }
+function getSelectedDay() { return document.getElementById('selectedDay').value; }
+
+function getVal(dayAbbr, dateStr, kpi) {
+  const section = getSection();
+  const baseKey = `${dayAbbr}_${dateStr}`;
+  const key = section === 'W/o Sof' ? `wosof_${baseKey}` : baseKey;
+  // Check section-specific key first, then fall back to base key
+  if (userData[key] && userData[key][kpi] !== undefined && userData[key][kpi] !== null && userData[key][kpi] !== '') {
+    return userData[key][kpi];
+  }
+  // Fallback to base key (for manually entered or backfilled data)
+  if (section !== 'W/o Sof' && userData[baseKey] && userData[baseKey][kpi] !== undefined && userData[baseKey][kpi] !== null && userData[baseKey][kpi] !== '') {
+    return userData[baseKey][kpi];
+  }
+  return null;
+}
+
+function setVal(dayAbbr, dateStr, kpi, val) {
+  const section = getSection();
+  const baseKey = `${dayAbbr}_${dateStr}`;
+  const key = section === 'W/o Sof' ? `wosof_${baseKey}` : baseKey;
+  if (!userData[key]) userData[key] = {};
+  userData[key][kpi] = val;
+}
+
+// ─── HEADER ───
+function updateHeader(dayAbbr) {
+  const now = new Date();
+  const monthName = now.toLocaleString('en-IN', { month: 'long' });
+  document.getElementById('hdrMonth').textContent = `${monthName} ${now.getFullYear()}`;
+  document.getElementById('pillDay').textContent = DAY_FULL[dayAbbr] || 'All Days';
+  document.getElementById('pillSection').textContent = getSection();
+  const dates = getDatesInMonthByDay(dayAbbr);
+  document.getElementById('pillDates').textContent = `${dates.length} ${DAY_FULL[dayAbbr] || 'Days'}s`;
+  document.getElementById('hdrMeta').innerHTML = 
+    `Generated: ${now.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}<br>` +
+    `${now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}`;
+}
+
+// ─── DAY SELECTOR BUTTONS ───
+function renderDaySelectorBtns() {
+  const container = document.getElementById('daySelectorBtns');
+  const current = getSelectedDay();
+  container.innerHTML = DAYS.slice(1).concat(['Sun']).map(day => {
+    const dates = getDatesInMonthByDay(day);
+    const hasAny = dates.some(d => {
+      const key = `${day}_${dateKey(d)}`;
+      return userData[key] && Object.values(userData[key]).some(v => v !== '' && v !== null);
+    });
+    return `<button class="day-btn ${day===current?'active':''} ${hasAny?'has-data':''}" 
+      onclick="selectDay('${day}')">${DAY_FULL[day].substring(0,3)}</button>`;
+  }).join('');
+}
+
+function selectDay(day) {
+  document.getElementById('selectedDay').value = day;
+  renderDayView();
+}
+
+// ─── MAIN BY-DAY VIEW ───
+function renderDayView() {
+  const day = getSelectedDay();
+  const section = getSection();
+  const hist = HISTORICAL[section][day];
+  const dates = getDatesInMonthByDay(day);
+
+  updateHeader(day);
+  renderDaySelectorBtns();
+
+  let html = '';
+
+  // ─ KPI Summary Cards (latest available or feb baseline) ─
+  const latestData = {};
+  for (let i = dates.length - 1; i >= 0; i--) {
+    const dk = dateKey(dates[i]);
+    const key = `${day}_${dk}`;
+    if (userData[key]) {
+      ['leads','appts','insp','l2a','a2i'].forEach(k => {
+        if (latestData[k] === undefined && userData[key][k] !== '' && userData[key][k] !== null && userData[key][k] !== undefined) {
+          latestData[k] = { val: userData[key][k], date: dates[i] };
+        }
+      });
+    }
+  }
+
+  html += `<div class="kpi-section-title">5 Key Performance Indicators — Latest Entry vs Feb Baseline</div>`;
+  html += `<div class="kpi-grid">`;
+  const kpis = ['leads','appts','insp','l2a','a2i'];
+  kpis.forEach(k => {
+    const isRatio = k==='l2a'||k==='a2i';
+    const febVal = hist ? hist[k][2] : null;
+    const latest = latestData[k];
+    const todayVal = latest ? latest.val : null;
+    const trend = trendVsFeb(todayVal, febVal, isRatio);
+    const displayVal = fmt(todayVal, isRatio);
+
+    html += `<div class="kpi-card ${KPI_COLORS[k]}">
+      <div class="kpi-name">${KPI_NAMES[k]}</div>
+      <div class="kpi-value ${KPI_COLORS[k]}">${displayVal || '<span class="kpi-empty">—</span>'}</div>
+      ${trend ? `<div class="kpi-trend ${trend.dir}">${trend.dir==='up'?'▲':'▼'} ${trend.pct}%</div>` : '<div class="kpi-trend neutral">vs Feb —</div>'}
+      <div class="kpi-baseline">Feb: ${hist && febVal ? fmt(febVal,isRatio) : '—'}</div>
+    </div>`;
+  });
+  html += `</div>`;
+
+  // ─ Historical Baselines ─
+  html += `<div class="kpi-section-title">Historical Monthly Averages (Baseline)</div>`;
+  html += `<div class="summary-bar">`;
+  kpis.forEach(k => {
+    const isRatio = k==='l2a'||k==='a2i';
+    const h = hist ? hist[k] : [null,null,null];
+    html += `<div class="sum-item">
+      <div class="sum-label">${KPI_NAMES[k]}</div>
+      <div style="font-size:0.62rem; color:var(--muted); font-family:'DM Mono',monospace; line-height:2;">
+        Dec: <b style="color:var(--sub)">${fmt(h[0],isRatio)||'—'}</b><br>
+        Jan: <b style="color:var(--sub)">${fmt(h[1],isRatio)||'—'}</b><br>
+        Feb: <b style="color:var(--accent)">${fmt(h[2],isRatio)||'—'}</b>
+      </div>
+    </div>`;
+  });
+  html += `</div>`;
+
+  // ─ Date Rows Table ─
+  html += `<div class="kpi-section-title">${DAY_FULL[day]}s in ${new Date().toLocaleString('en-IN',{month:'long',year:'numeric'})} — Day-Wise Data</div>`;
+  html += `<table class="dates-table">
+    <thead><tr>
+      <th>Date</th>
+      <th>Leads</th><th>Appts</th><th>Inspections</th><th>L2A</th><th>A2I</th>
+    </tr></thead><tbody>`;
+
+  dates.forEach(d => {
+    const dk = dateKey(d);
+    const isT = isToday(d);
+    const isPast = d < new Date() && !isT;
+    const vals = {};
+    kpis.forEach(k => { vals[k] = getVal(day, dk, k); });
+
+    const dateLabel = d.toLocaleDateString('en-IN', { day:'2-digit', month:'short' });
+    const febBaselines = hist ? { leads:hist.leads[2], appts:hist.appts[2], insp:hist.insp[2], l2a:hist.l2a[2], a2i:hist.a2i[2] } : {};
+
+    html += `<tr class="${isT?'today-row':''}">
+      <td>
+        <div class="date-label">${dateLabel}${isT?'<span class="today-badge">Today</span>':''}</div>
+        <div class="date-cell">${DAY_FULL[day].substring(0,3)}, ${d.getFullYear()}</div>
+      </td>`;
+    
+    kpis.forEach(k => {
+      const isRatio = k==='l2a'||k==='a2i';
+      const v = vals[k];
+      const hasFeb = febBaselines[k];
+      const trend = v !== null ? trendVsFeb(v, hasFeb, isRatio) : null;
+      const displayV = v !== null ? fmt(v, isRatio) : null;
+
+      html += `<td>
+        <div class="val-cell ${displayV?'has-data':'no-data'}">
+          <input class="editable no-screenshot" 
+            type="number" 
+            placeholder="${isRatio?'0.000':'enter'}" 
+            step="${isRatio?'0.001':'1'}"
+            value="${v !== null ? v : ''}"
+            onchange="handleInput('${day}','${dk}','${k}',this.value)"
+            ${!isT && !isPast ? '' : ''}
+          >
+          <span class="screenshot-only-val">${displayV || '—'}</span>
+        </div>
+        ${trend ? `<div class="trend-${trend.dir}">${trend.dir==='up'?'▲':'▼'}${trend.pct}%</div>` : ''}
+      </td>`;
+    });
+
+    html += `</tr>`;
+  });
+
+  html += `</tbody></table>`;
+
+  document.getElementById('mainContent').innerHTML = html;
+
+  // inject screenshot-only spans style
+  const style = document.getElementById('screenshotSpanStyle') || (() => {
+    const s = document.createElement('style');
+    s.id = 'screenshotSpanStyle';
+    document.head.appendChild(s);
+    return s;
+  })();
+  style.textContent = `.screenshot-only-val { display: none; }
+  .screenshot-mode .screenshot-only-val { display: inline; }
+  .screenshot-mode .editable { display: none; }`;
+}
+
+// ─── ALL DAYS OVERVIEW ───
+function renderAllDaysView() {
+  updateHeader('All');
+  document.getElementById('pillDay').textContent = 'All Days';
+  document.getElementById('pillDates').textContent = new Date().toLocaleString('en-IN',{month:'long',year:'numeric'});
+  document.getElementById('hdrSubtitle').textContent = 'Full Month Overview — All Weekdays';
+
+  const section = getSection();
+  const allDates = getAllDatesInMonth();
+  const orderedDays = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const kpis = ['leads','appts','insp','l2a','a2i'];
+
+  let html = `<div class="all-days-grid">`;
+  orderedDays.forEach(day => {
+    const hist = HISTORICAL[section][day];
+    const dates = allDates[day];
+    html += `<div class="day-column">
+      <div class="day-col-header ${day}">${DAY_FULL[day].substring(0,3)}</div>`;
+    
+    dates.forEach(d => {
+      const dk = dateKey(d);
+      const isT = isToday(d);
+      const dateLabel = d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'});
+      html += `<div class="day-date-row ${isT?'is-today':''}">${dateLabel}${isT?' ●':''}</div>`;
+      kpis.forEach(k => {
+        const isRatio = k==='l2a'||k==='a2i';
+        const v = getVal(day, dk, k);
+        const displayV = v !== null ? fmt(v,isRatio) : null;
+        const febVal = hist ? hist[k][2] : null;
+        const trend = v !== null ? trendVsFeb(v, febVal, isRatio) : null;
+        html += `<div class="day-mini-kpi">
+          <div class="dmk-label">${KPI_NAMES[k]}</div>
+          <div class="dmk-val" style="color:${displayV ? 'var(--text)':'var(--muted)'};font-style:${displayV?'normal':'italic'}">
+            ${displayV || '—'}
+            ${trend ? `<span style="font-size:0.55rem;color:var(--${trend.dir==='up'?'green':'red'})">${trend.dir==='up'?'▲':'▼'}</span>` : ''}
+          </div>
+        </div>`;
+      });
+    });
+
+    html += `</div>`;
+  });
+  html += `</div>`;
+
+  document.getElementById('mainContent').innerHTML = html;
+}
+
+function switchView() {
+  const mode = document.getElementById('viewMode').value;
+  document.getElementById('dayPickerGroup').style.display = mode === 'byDay' ? '' : 'none';
+  document.getElementById('daySelectorBtns').style.display = mode === 'byDay' ? '' : 'none';
+  render();
+}
+
+function render() {
+  const mode = document.getElementById('viewMode').value;
+  if (mode === 'byDay') renderDayView();
+  else renderAllDaysView();
+}
+
+function handleInput(day, dk, kpi, val) {
+  setVal(day, dk, kpi, val === '' ? null : parseFloat(val));
+  renderDaySelectorBtns();
+}
+
+function clearDayData() {
+  const day = getSelectedDay();
+  const dates = getDatesInMonthByDay(day);
+  dates.forEach(d => { delete userData[`${day}_${dateKey(d)}`]; });
+  render();
+}
+
+function prefillFromExcel() {
+  applyBackfill(true);
+  renderDaySelectorBtns();
+  render();
+  showToast('✅ All Excel data backfilled!');
+}
+
+function applyBackfill(overwrite = false) {
+  const section = getSection();
+  const source = BACKFILL[section] || {};
+  Object.entries(source).forEach(([key, vals]) => {
+    if (!userData[key]) userData[key] = {};
+    Object.entries(vals).forEach(([k, v]) => {
+      if (overwrite || userData[key][k] === undefined || userData[key][k] === null || userData[key][k] === '') {
+        userData[key][k] = v;
+      }
+    });
+  });
+}
+
+// ─── FULL BACKFILL DATA (all known March dates from Excel) ───
+const BACKFILL = {
+  Overall: {
+    'Sun_2026-03-01': { leads:16077, appts:6218, insp:4737, l2a:0.39,  a2i:0.58  },
+    'Mon_2026-03-02': { leads:15905, appts:6328, insp:3551, l2a:0.398, a2i:0.632 },
+    'Tue_2026-03-03': { leads:17414, appts:6038, insp:3420, l2a:0.347, a2i:0.659 },
+  },
+  'W/o Sof': {
+    'Sun_2026-03-01': { leads:15608, appts:5655, insp:4165, l2a:0.36,  a2i:0.67  },
+    'Mon_2026-03-02': { leads:15529, appts:5731, insp:2933, l2a:0.369, a2i:0.674 },
+  }
+};
+
+function getMarchData(section, day) {
+  // legacy helper — kept for compatibility
+  return null;
+}
+
+async function takeScreenshot() {
+  document.body.classList.add('screenshot-mode');
+  await new Promise(r => setTimeout(r, 100));
+  
+  try {
+    if (typeof html2canvas !== 'undefined') {
+      const canvas = await html2canvas(document.getElementById('screenshotArea'), {
+        backgroundColor: '#060b14',
+        scale: 2,
+        useCORS: true,
+        logging: false
+      });
+      canvas.toBlob(blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `KPI_${getSelectedDay()}_${new Date().toISOString().split('T')[0]}.png`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast('📸 Screenshot saved!');
+      });
+    } else {
+      showToast('💡 Use browser: Right-click → Save as image, or Ctrl+Shift+S');
+    }
+  } catch(e) {
+    showToast('💡 Press Ctrl+Shift+S or use browser screenshot tool');
+  }
+
+  document.body.classList.remove('screenshot-mode');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ─── EXCEL UPLOAD & PARSE ───
+function toggleUploadZone() {
+  const zone = document.getElementById('uploadZone');
+  const btn  = document.getElementById('toggleUploadBtn');
+  const collapsed = zone.classList.toggle('collapsed');
+  btn.textContent = collapsed ? '📂 Upload Excel' : '✖ Close Upload';
+}
+
+// Drag & drop — init called from window.onload
+function initDragDrop() {
+  const drop = document.getElementById('dropArea');
+  if (!drop) return;
+  drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('dragover'); });
+  drop.addEventListener('dragleave', () => drop.classList.remove('dragover'));
+  drop.addEventListener('drop', e => {
+    e.preventDefault();
+    drop.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file) handleFileSelect(file);
+  });
+}
+
+function handleFileSelect(file) {
+  if (!file) return;
+  document.getElementById('statusFile').textContent    = '⏳ Reading: ' + file.name;
+  document.getElementById('statusError').textContent   = '';
+  document.getElementById('parseProgress').textContent = 'Parsing...';
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      // Use raw:false so dates like "01-Mar" come as strings, numbers stay as numbers
+      const wb   = XLSX.read(new Uint8Array(e.target.result), { type:'array', cellDates:false, raw:false });
+      console.log('Sheets:', wb.SheetNames);
+
+      // Pick sheet with most columns
+      let bestSheet = wb.SheetNames[0], bestCols = 0;
+      wb.SheetNames.forEach(function(name) {
+        const ref = wb.Sheets[name]['!ref'];
+        if (!ref) return;
+        const rng = XLSX.utils.decode_range(ref);
+        console.log('Sheet "'+name+'" = '+(rng.e.r+1)+' rows x '+(rng.e.c+1)+' cols');
+        if ((rng.e.c+1) > bestCols) { bestCols = rng.e.c+1; bestSheet = name; }
+      });
+
+      const ws   = wb.Sheets[bestSheet];
+      const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:null, raw:false });
+      console.log('Using sheet "'+bestSheet+'", rows='+rows.length+', cols in row0='+( rows[0]?rows[0].length:0 ));
+      console.log('Row 0:', rows[0]);
+      console.log('Row 1:', rows[1]);
+      loadFromSimpleLayout(rows, file.name);
+    } catch(err) {
+      document.getElementById('statusFile').textContent  = '❌ ' + err.message;
+      document.getElementById('statusError').textContent = 'Open F12 Console for details';
+      console.error(err);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+/*
+  YOUR EXCEL LAYOUT (confirmed from screenshot):
+  ┌──────────┬──────────────┬────────┬────────┬────────┬────────┐
+  │ (col 0)  │ Measure Name │ 01-Mar │ 02-Mar │ 03-Mar │ 04-Mar │
+  ├──────────┼──────────────┼────────┼────────┼────────┼────────┤
+  │ Overall  │ LEADS        │ 16077  │ 15905  │ 17414  │ 12678  │
+  │          │ APPTS        │  6218  │  6328  │  6038  │  4615  │
+  │          │ INSPECTIONS  │  4737  │  3551  │  3420  │  2406  │
+  │          │ L2A          │   39%  │ 39.80% │ 34.70% │ 36.40% │
+  │          │ A2I          │   58%  │ 63.20% │ 65.30% │ 58.10% │
+  ├──────────┼──────────────┼────────┼────────┼────────┼────────┤
+  │ (blank)  │ (blank)      │        │        │        │        │
+  ├──────────┼──────────────┼────────┼────────┼────────┼────────┤
+  │ W/o Sof  │ LEADS        │ 15608  │ 15529  │ 16879  │ 12248  │
+  │          │ APPTS        │  5655  │  5731  │  5396  │  3992  │
+  │          │ INSPECTIONS  │  4165  │  2933  │  2767  │  1751  │
+  │          │ L2A          │   36%  │ 36.90% │ 31.97% │  32.6% │
+  │          │ A2I          │   67%  │ 67.40% │ 69.70% │  60.7% │
+  └──────────┴──────────────┴────────┴────────┴────────┴────────┘
+*/
+function loadFromSimpleLayout(rows, fileName) {
+  if (!rows || rows.length < 2) {
+    showUploadError('File appears empty'); return;
+  }
+
+  // ── Step 1: Find header row (contains "Measure Name" or date-like strings) ──
+  let headerRowIdx = -1;
+  for (let ri = 0; ri < Math.min(5, rows.length); ri++) {
+    const row = rows[ri] || [];
+    const joined = row.join(' ').toLowerCase();
+    if (joined.includes('measure') || joined.includes('mar') || joined.includes('jan') || joined.includes('feb')) {
+      headerRowIdx = ri;
+      break;
+    }
+  }
+  if (headerRowIdx === -1) headerRowIdx = 0;
+  console.log('Header row index:', headerRowIdx, '→', rows[headerRowIdx]);
+
+  // ── Step 2: Parse date columns from header row ──
+  const headerRow = rows[headerRowIdx] || [];
+  const dateCols  = []; // [{col, date: "YYYY-MM-DD", dayName: "Mon"}]
+
+  headerRow.forEach(function(cell, ci) {
+    if (!cell) return;
+    const ds = parseDateFromHeader(cell);
+    if (ds) {
+      const dayName = getDayName(ds);
+      dateCols.push({ col: ci, date: ds, day: dayName });
+      console.log('Date col '+ci+': "'+cell+'" → '+ds+' ('+dayName+')');
+    }
+  });
+
+  console.log('Found', dateCols.length, 'date columns');
+  if (dateCols.length === 0) { showUploadError('No date columns found. Header row: '+JSON.stringify(headerRow)); return; }
+
+  // ── Step 3: Parse KPI rows below header ──
+  // Scan each row: col0 = section label (if present), col1 = KPI name, col2+ = values
+  userData = {};
+  let currentSection = 'Overall';
+  let loaded = 0, dayCounts = {};
+
+  const KPI_MAP = {
+    'leads': 'leads', 'leads avg': 'leads',
+    'appts': 'appts', 'appts avg': 'appts', 'appointments': 'appts',
+    'inspections': 'insp', 'inspections avg': 'insp', 'insp': 'insp',
+    'l2a': 'l2a',
+    'a2i': 'a2i'
+  };
+
+  for (let ri = headerRowIdx + 1; ri < rows.length; ri++) {
+    const row = rows[ri] || [];
+    if (row.every(function(v){ return v==null||v===''; })) continue; // skip blank rows
+
+    // Check col 0 for section label
+    const col0 = row[0] ? String(row[0]).trim() : '';
+    if (col0.toLowerCase() === 'overall')          currentSection = 'Overall';
+    if (col0.toLowerCase().includes('sof') || col0.toLowerCase().includes('w/o')) currentSection = 'W/o Sof';
+
+    // Check col 1 for KPI label
+    const col1 = row[1] ? String(row[1]).trim().toLowerCase() : '';
+    const kpi  = KPI_MAP[col1];
+    if (!kpi) continue;
+
+    console.log('Row '+ri+': section="'+currentSection+'" kpi="'+kpi+'" col1="'+col1+'"');
+
+    // Read value for each date column
+    dateCols.forEach(function(dc) {
+      const raw = row[dc.col];
+      const val = parseKpiValue(raw, kpi);
+      if (val === null) return;
+
+      const key     = dc.day + '_' + dc.date;
+      const storeKey = currentSection === 'W/o Sof' ? 'wosof_' + key : key;
+
+      if (!userData[storeKey]) userData[storeKey] = {};
+      userData[storeKey][kpi] = val;
+
+      if (currentSection === 'Overall' && kpi === 'leads') {
+        loaded++;
+        dayCounts[dc.day] = (dayCounts[dc.day] || 0) + 1;
+      }
+    });
+  }
+
+  console.log('userData keys:', Object.keys(userData));
+  console.log('Total date-entries loaded:', loaded);
+
+  if (loaded === 0) { showUploadError('Data rows found but no values matched. Check console.'); return; }
+
+  // ── Update UI ──
+  document.getElementById('statusFile').textContent    = '✅ ' + fileName;
+  document.getElementById('statusError').textContent   = '';
+  document.getElementById('parseProgress').textContent = '';
+  const summary = Object.entries(dayCounts).map(function(e){ return e[0]+': '+e[1]; }).join(' · ');
+  document.getElementById('statusCounts').innerHTML =
+    '<span style="color:var(--green)">✅ '+loaded+' date entries loaded</span><br>'+summary;
+
+  renderDaySelectorBtns();
+  render();
+  showToast('✅ '+loaded+' entries loaded from Excel!');
+}
+
+// Parse date strings like "01-Mar", "1-Mar", "Mar-01", "01-Mar-26", serial numbers
+function parseDateFromHeader(val) {
+  if (val == null || val === '') return null;
+  const s = String(val).trim();
+
+  // "01-Mar", "1-Mar", "01-Mar-26", "01-Mar-2026"
+  const MONTHS = {jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
+  const m1 = s.match(/^(\d{1,2})[-\/\s]([A-Za-z]{3})(?:[-\/\s](\d{2,4}))?$/);
+  if (m1) {
+    const day = parseInt(m1[1]);
+    const mon = MONTHS[m1[2].toLowerCase()];
+    const yr  = m1[3] ? (m1[3].length===2 ? 2000+parseInt(m1[3]) : parseInt(m1[3])) : 2026;
+    if (mon && day >= 1 && day <= 31) return yr+'-'+pad(mon)+'-'+pad(day);
+  }
+  // "Mar-01", "Mar 01"
+  const m2 = s.match(/^([A-Za-z]{3})[-\/\s](\d{1,2})(?:[-\/\s](\d{2,4}))?$/);
+  if (m2) {
+    const mon = MONTHS[m2[1].toLowerCase()];
+    const day = parseInt(m2[2]);
+    const yr  = m2[3] ? (m2[3].length===2 ? 2000+parseInt(m2[3]) : parseInt(m2[3])) : 2026;
+    if (mon && day >= 1 && day <= 31) return yr+'-'+pad(mon)+'-'+pad(day);
+  }
+  // ISO string "2026-03-01"
+  const m3 = s.match(/^(20\d\d)-(\d\d)-(\d\d)/);
+  if (m3) return m3[1]+'-'+m3[2]+'-'+m3[3];
+  // Excel serial (44000-48000 = years 2020-2031)
+  if (/^\d+$/.test(s)) {
+    const n = parseInt(s);
+    if (n > 44000 && n < 48000) {
+      const d = new Date(Math.round((n - 25569) * 86400000));
+      return d.getUTCFullYear()+'-'+pad(d.getUTCMonth()+1)+'-'+pad(d.getUTCDate());
+    }
+  }
+  return null;
+}
+
+// Parse KPI value — handle "39%", "39.80%", "0.398", "15905"
+function parseKpiValue(raw, kpi) {
+  if (raw == null || raw === '') return null;
+  let s = String(raw).trim().replace(/,/g,'');
+  const isRatio = (kpi === 'l2a' || kpi === 'a2i');
+  let n;
+  if (s.endsWith('%')) {
+    n = parseFloat(s) / 100; // "39%" → 0.39
+  } else {
+    n = parseFloat(s);
+  }
+  if (isNaN(n)) return null;
+  // If it looks like a whole number for a ratio (e.g. stored as 39 not 0.39), convert
+  if (isRatio && n > 1) n = n / 100;
+  return isRatio ? Math.round(n * 1000) / 1000 : Math.round(n);
+}
+
+function getDayName(dateStr) {
+  const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const d = new Date(dateStr + 'T00:00:00');
+  return DAYS[d.getDay()];
+}
+
+function pad(n) { return String(n).padStart(2,'0'); }
+
+function showUploadError(msg) {
+  document.getElementById('statusFile').textContent  = '⚠️ Could not load data';
+  document.getElementById('statusError').textContent = msg;
+  document.getElementById('parseProgress').textContent = '';
+  console.error('Upload error:', msg);
+}
+
+function toNum(v,k){ return parseKpiValue(v,k); }
+function toDateStr(v){ return parseDateFromHeader(v); }
+function parseKpiVal(r,k){ return parseKpiValue(r,k); }
+function parseDateCell(v){ return parseDateFromHeader(v); }
+function parseExcelRows(r,f){ loadFromSimpleLayout(r,f); }
+function detectAndLoad(r,f){ loadFromSimpleLayout(r,f); }
+function parseAndLoad(r,f){ loadFromSimpleLayout(r,f); }
+
+// ─── INIT ───
+window.onload = () => {
+  const todayAbbr = DAYS[new Date().getDay()];
+  document.getElementById('selectedDay').value = todayAbbr;
+
+  // Load hardcoded backfill as seed data (Overall)
+  Object.entries(BACKFILL.Overall || {}).forEach(([key, vals]) => {
+    if (!userData[key]) userData[key] = {};
+    Object.entries(vals).forEach(([k, v]) => { userData[key][k] = v; });
+  });
+  // Load hardcoded backfill as seed data (W/o Sof)
+  Object.entries(BACKFILL['W/o Sof'] || {}).forEach(([key, vals]) => {
+    const wk = 'wosof_' + key;
+    if (!userData[wk]) userData[wk] = {};
+    Object.entries(vals).forEach(([k, v]) => { userData[wk][k] = v; });
+  });
+
+  initDragDrop();
+  renderDaySelectorBtns();
+  render();
+};
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</body>
+</html>
